@@ -27,30 +27,33 @@ export default {
     if (!ws) {
       console.log("STATUS_WS_URL WebSocket 正在连接...")
 
-      const baseUrlSplit = getBaseUrl().split("//")
-      const baseUrl = baseUrlSplit[1]
-      const STATUS_WS_URL = `ws://${baseUrl}/zhenxun/socket/system_status` // 状态ws
-      const websocket = new WebSocket(STATUS_WS_URL)
-      startHeartbeat()
+      const isSecure = window.location.protocol === 'https:'; // 判断当前页面是否使用 HTTPS
+      const protocol = isSecure ? 'wss://' : 'ws://'; // 根据页面协议选择 WebSocket 协议
+      const baseUrlSplit = getBaseUrl().split("//");
+      const baseUrl = baseUrlSplit[1];
+      const STATUS_WS_URL = `${protocol}${baseUrl}/zhenxun/socket/system_status`; // 动态选择 ws 或 wss
+
+      const websocket = new WebSocket(STATUS_WS_URL);
+      startHeartbeat();
       websocket.onopen = () => {
-        console.log("STATUS_WS_URL WebSocket 已连接...")
-      }
-      websocket.onmessage = onMessage
+        console.log("STATUS_WS_URL WebSocket 已连接...");
+      };
+      websocket.onmessage = onMessage;
       websocket.onclose = () => {
-        vue.$message.warning("STATUS_WS_URL WebSocket 已断开...")
-        stopHeartbeat()
+        vue.$message.warning("STATUS_WS_URL WebSocket 已断开...");
+        stopHeartbeat();
         setTimeout(() => {
-          this.initWebSocket()
-        }, 3000)
-      }
-      ws = websocket
+          this.initWebSocket(onMessage); // 重连时传递回调函数
+        }, 3000);
+      };
+      ws = websocket;
     }
   },
   //断开socked方法
   closeWebSocket: function () {
-    console.log("关闭ws")
+    console.log("关闭ws");
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.close()
+      this.ws.close();
     }
   },
 }

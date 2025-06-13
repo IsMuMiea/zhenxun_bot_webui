@@ -73,7 +73,7 @@ export default {
                 user_id: botInfo.self_id,
                 message: [{ type: "text", msg: msg }],
                 name: botInfo.name,
-                ava_url: `http://q1.qlogo.cn/g?b=qq&nk=${botInfo.self_id}&s=160`,
+                ava_url: `http://q1.qlogo.cn/g?b=qq&nk=${botInfo.self_id}&s=160`, //修复链接
               }
               vue.$store.commit("ADD_CHAT_MSG", {
                 chatId: groupId || userId,
@@ -97,30 +97,33 @@ export default {
   //初始化ws
   initWebSocket: function () {
     if (!ws) {
-      const baseUrlSplit = getBaseUrl().split("//")
-      const baseUrl = baseUrlSplit[1]
-      const CHAT_WS_URL = `ws://${baseUrl}/zhenxun/socket/chat` // 日志ws
-      const websocket = new WebSocket(CHAT_WS_URL)
-      startHeartbeat()
+      const isSecure = window.location.protocol === 'https:'; // 判断当前页面是否使用 HTTPS
+      const protocol = isSecure ? 'wss://' : 'ws://';
+      const baseUrlSplit = getBaseUrl().split("//");
+      const baseUrl = baseUrlSplit[1];
+      const CHAT_WS_URL = `${protocol}${baseUrl}/zhenxun/socket/chat`; // 动态选择 ws 或 wss
+
+      const websocket = new WebSocket(CHAT_WS_URL);
+      startHeartbeat();
       websocket.onopen = () => {
-        console.log("CHAT WebSocket 已连接...")
-      }
-      websocket.onmessage = chatWebsocketOnmessage
+        console.log("CHAT WebSocket 已连接...");
+      };
+      websocket.onmessage = chatWebsocketOnmessage;
       websocket.onclose = () => {
-        vue.$message.warning("CHAT WebSocket 已断开...")
-        stopHeartbeat()
+        vue.$message.warning("CHAT WebSocket 已断开...");
+        stopHeartbeat();
         setTimeout(() => {
-          this.initWebSocket()
-        }, 3000)
-      }
-      ws = websocket
+          this.initWebSocket();
+        }, 3000);
+      };
+      ws = websocket;
     }
   },
   //断开socked方法
   closeWebSocket: function () {
-    console.log("关闭ws")
+    console.log("关闭ws");
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.close()
+      this.ws.close();
     }
   },
 }
